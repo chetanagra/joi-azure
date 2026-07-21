@@ -1,0 +1,76 @@
+**acr-url.txt
+/interview_id.txt
+
+/infra/*credentials.sh
+/infra/base/terraform.tfstate*
+/infra/backend-support/terraform.tfstate
+/infra/backend-support/terraform.tfstate.backup
+/infra/backend-support/.terraform.lock.hcl
+/infra/backend-support/create_sp.sh
+/infra/backend-support/steps.txt
+/infra_problem.zip
+/infra-problem-*.zip
+/joi-news-*.zip
+
+/build/
+target
+classes
+checkouts
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+.lein-*
+.nrepl-port
+.hgignore
+.hg/
+*.swp
+.DS_Store
+*.iml
+.idea/
+\.terraform/
+
+
+# Created by https://www.toptal.com/developers/gitignore/api/vim,visualstudiocode
+# Edit at https://www.toptal.com/developers/gitignore?templates=vim,visualstudiocode
+
+### Vim ###
+# Swap
+[._]*.s[a-v][a-z]
+!*.svg  # comment out if you don't need vector files
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Temporary
+.netrwhist
+*~
+# Auto-generated tag files
+tags
+# Persistent undo
+[._]*.un~
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+.history
+.ionide
+
+/infra/anotacoes-gerais
+/infra/id_rsa
+/infra/id_rsa.pub
+infra/base/.terraform.lock.hcl
+infra/news/.terraform.lock.hcl
+/infra/base/terraform.tfstate
+/infra/base/terraform.tfstate.backup
+/infra/news/terraform.tfstate
+/infra/news/terraform.tfstate.backup
+/infra/news/.terraform.tfstate.lock.info
