@@ -32,3 +32,22 @@
     resource_type = "ContainerRegistry"
     }
 
+# infra/base/avn.tf
+
+  instead of allowing ssh to all we should putlist of trusted cidrs:
+
+    variable "allowed_ssh_cidrs" {
+      type    = list(string)
+      default = ["203.0.113.10/32"]
+    }
+
+    resource "azurerm_network_security_rule" "rule-inbound-ssh-quotes" {
+      source_address_prefix       = var.allowed_ssh_cidrs
+    }
+
+  
+  
+
+    
+
+  
