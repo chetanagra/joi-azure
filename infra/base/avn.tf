@@ -181,7 +181,7 @@ resource "azurerm_network_security_rule" "rule-inbound-backend" {
   protocol                    = "Tcp"
   source_port_range           = "*"
   destination_port_range      = "8082,8081"
-  source_address_prefix       = "*"
+  source_address_prefix       = "VirtualNetwork" # Allow requests only from within vnet 
   destination_address_prefix  = "*"
   resource_group_name         = data.azurerm_resource_group.azure-resource.name
   network_security_group_name = azurerm_network_security_group.security-group-backend.name
