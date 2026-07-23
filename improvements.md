@@ -125,7 +125,7 @@
       container_access_type = "private"  # Instead of "blob"
     }
 
-  Add sensitive = true to avoid exposing URL in terraform apply 
+  Add sensitive = true to avoid exposing URL in terraform apply or use managed identity to access blob container instead of url
   
     output "url_blob" {
       sensitive = true
@@ -133,7 +133,71 @@
     }
 
     
+# infra/news/main.tf
 
+  use key vault to pass ssh keys
+
+    data "azurerm_client_config" "current" {}
+
+    # ── Key Vault to store SSH keys ─────────────────────────────────────
+    resource "azurerm_key_vault" "ssh_kv" {
+      name                       = "${var.prefix}sshkv"
+      location                   = var.location
+      resource_group_name        = data.azurerm_resource_group.azure-resource.name
+      tenant_id                  = data.azurerm_client_config.current.tenant_id
+      sku_name                   = "standard"
+      purge_protection_enabled   = true
+      soft_delete_retention_days = 7
+      enable_rbac_authorization  = false
+    }
+    
+    # ── Store the PUBLIC key as a secret ───────────────────────────────
+    resource "azurerm_key_vault_secret" "ssh_public_key" {
+      name         = "ssh-public-key"
+      value        = file("${path.module}/../id_rsa.pub")
+      key_vault_id = azurerm_key_vault.ssh_kv.id
+    }
+    
+    # ── Store the PRIVATE key as a secret ──────────────────────────────
+    resource "azurerm_key_vault_secret" "ssh_private_key" {
+      name         = "ssh-private-key"
+      value        = file("${path.module}/../id_rsa")
+      key_vault_id = azurerm_key_vault.ssh_kv.id
+    }
+    
+    # ── Access policy so Terraform can read secrets ────────────────────
+    resource "azurerm_key_vault_access_policy" "terraform_access" {
+      key_vault_id = azurerm_key_vault.ssh_kv.id
+      tenant_id    = data.azurerm_client_config.current.tenant_id
+      object_id    = data.azurerm_client_config.current.object_id
+    
+      secret_permissions = ["Get", "List"]
+    }
+
+    # Read public key 
+    admin_ssh_key {
+      username   = "adminuser"
+      public_key = azurerm_key_vault_secret.ssh_public_key.value
+    }
+
+    # Read Private key from vault
+    connection {
+      host        = self.public_ip_address
+      user        = "adminuser"
+      type        = "ssh"
+      private_key = azurerm_key_vault_secret.ssh_private_key.value
+      timeout     = "1m"
+      agent       = false    # ✅ Changed to false — using private_key directly
+    }
+
+
+  enable encryption on disk add this line to VM configs  encryption_at_host_enabled = true 
+
+
+  use update image instead of 18.04 use 22_04-lts as standard-support ended in April 2023
+
+
+  
   
   
 
