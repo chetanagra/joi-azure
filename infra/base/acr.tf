@@ -111,6 +111,12 @@ resource "azurerm_management_lock" "frontend_lock" {
 */
 
 # We enable microsoft defender for vulnerability scans 
+/*
+resource "azurerm_security_center_subscription_pricing" "defender_container_registry" {
+tier          = "Standard"
+resource_type = "ContainerRegistry"
+}
+/*
 
 
 
