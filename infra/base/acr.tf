@@ -89,7 +89,7 @@ resource "local_file" "acr" {
 */
 
 # We can use locks to prevent deletion of container registries
-/*
+
 resource "azurerm_management_lock" "quotes_lock" {
   name       = "delete-lock"
   scope      = azurerm_container_registry.quotes.id
@@ -108,15 +108,15 @@ resource "azurerm_management_lock" "frontend_lock" {
   scope      = azurerm_container_registry.frontend.id
   lock_level = "CanNotDelete"
 }
-*/
+
 
 # We enable microsoft defender for vulnerability scans 
-/*
+
 resource "azurerm_security_center_subscription_pricing" "defender_container_registry" {
 tier          = "Standard"
 resource_type = "ContainerRegistry"
 }
-/*
+
 
 
 
