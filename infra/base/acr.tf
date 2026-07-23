@@ -76,6 +76,8 @@ resource "azurerm_role_assignment" "acr_acrpull_frontend" {
   principal_id       = azurerm_user_assigned_identity.identity-acr.principal_id
 }
 
+# These 2 blocks can be removed not required 
+/*
 locals {
   acr_url = ".azurecr.io"
 }
@@ -84,3 +86,5 @@ resource "local_file" "acr" {
   filename = "${path.module}/../acr-url.txt"
   content  = local.acr_url
 }
+*/
+
