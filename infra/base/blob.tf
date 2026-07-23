@@ -12,7 +12,7 @@ resource "azurerm_storage_account" "public-storage-account" {
 resource "azurerm_storage_container" "public-storage-container" {
   name                  = "${var.prefix}psc"
   storage_account_name  = azurerm_storage_account.public-storage-account.name
-  container_access_type = "blob"  # Instead of "blob" use private to restrict pulic access 
+  container_access_type = "private"  # Instead of "blob" use private to restrict public access every request will be authenticated using managed identity 
 }
 
 resource "azurerm_storage_blob" "blob-static" {
