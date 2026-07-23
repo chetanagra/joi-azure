@@ -8,6 +8,14 @@ data "azurerm_storage_account" "public-storage-account" {
   resource_group_name = data.azurerm_resource_group.azure-resource.name
 }
 
+# Attaching azure storage account to user assigned identity so it can be used to authenticate requests coming to blob conatiner 
+resource "azurerm_role_assignment" "storage" {
+  scope                = azurerm_storage_account.public-storage-account.id
+  role_definition_name = "Storage Blob Data Reader"
+
+  principal_id = data.azurerm_user_assigned_identity.identity-acr.principal_id
+}
+
 data "azurerm_storage_container" "public-storage-container" {
   name                 = "${var.prefix}psc"
   storage_account_name = data.azurerm_storage_account.public-storage-account.name
