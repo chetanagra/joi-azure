@@ -105,7 +105,7 @@ resource "azurerm_subnet_route_table_association" "association-subnet-pvt" {
 
 
 resource "azurerm_network_security_group" "security-group-backend" {
-  name                = "security-group-quotes"
+  name                = "security-group-backend"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.azure-resource.name
 }
@@ -118,7 +118,7 @@ resource "azurerm_network_security_group" "security-group-frontend" {
 }
 
 resource "azurerm_network_security_rule" "rule-outbound-backend" {
-  name                        = "rule-outbound-quotes"
+  name                        = "rule-outbound-backend"
   priority                    = 1000
   direction                   = "Outbound"
   access                      = "Allow"
@@ -128,7 +128,7 @@ resource "azurerm_network_security_rule" "rule-outbound-backend" {
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = data.azurerm_resource_group.azure-resource.name
-  network_security_group_name = azurerm_network_security_group.security-group-quotes.name
+  network_security_group_name = azurerm_network_security_group.security-group-backend.name
 }
 
 resource "azurerm_network_security_rule" "rule-outbound-frontend" {
@@ -146,7 +146,7 @@ resource "azurerm_network_security_rule" "rule-outbound-frontend" {
 }
 
 resource "azurerm_network_security_rule" "rule-inbound-ssh-backend" {
-  name                        = "rule-inbound-ssh-quotes"
+  name                        = "rule-inbound-ssh-backend"
   priority                    = 1003
   direction                   = "Inbound"
   access                      = "Allow"
@@ -156,7 +156,7 @@ resource "azurerm_network_security_rule" "rule-inbound-ssh-backend" {
   source_address_prefix       = "*"
   destination_address_prefix  = "VirtualNetwork"
   resource_group_name         = data.azurerm_resource_group.azure-resource.name
-  network_security_group_name = azurerm_network_security_group.security-group-quotes.name
+  network_security_group_name = azurerm_network_security_group.security-group-backend.name
 }
 
 resource "azurerm_network_security_rule" "rule-inbound-ssh-frontend" {
@@ -184,7 +184,7 @@ resource "azurerm_network_security_rule" "rule-inbound-backend" {
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = data.azurerm_resource_group.azure-resource.name
-  network_security_group_name = azurerm_network_security_group.security-group-quotes.name
+  network_security_group_name = azurerm_network_security_group.security-group-backend.name
 }
 
 
@@ -234,7 +234,7 @@ resource "azurerm_network_interface" "network-interface-frontend" {
 
 resource "azurerm_subnet_network_security_group_association" "association-ni-sg-backend" {
   subnet_id                 = azurerm_subnet.private_subnet.id
-  network_security_group_id = azurerm_network_security_group.security-group-quotes.id
+  network_security_group_id = azurerm_network_security_group.security-group-backend.id
 }
 
 resource "azurerm_network_interface_security_group_association" "association-ni-sg-frontend" {
