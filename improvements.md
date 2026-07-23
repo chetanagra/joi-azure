@@ -105,6 +105,32 @@
       network_security_group_id = azurerm_network_security_group.security-group-quotes.id
     }
 
+# infra/base/blob.tf
+
+  Enable https only traffic 
+
+    resource "azurerm_storage_account" "public-storage-account" {
+      enable_https_traffic_only = true
+    }
+
+  Enforce min TLS version 
+    
+    resource "azurerm_storage_account" "public-storage-account" {
+      minimum_tls_version = "TLS1_2"
+    }
+
+  Restrict public access for blob 
+
+    resource "azurerm_storage_container" "public-storage-container" {
+      container_access_type = "private"  # Instead of "blob"
+    }
+
+  Add sensitive = true to avoid exposing URL in terraform apply 
+  
+    output "url_blob" {
+      sensitive = true
+      value     = "https://storageaccount.blob.core.windows.net/container/static/"
+    }
 
     
 
