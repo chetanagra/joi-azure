@@ -7,6 +7,19 @@ resource "azurerm_storage_account" "public-storage-account" {
   account_replication_type = "LRS"
   enable_https_traffic_only = true # Enable https only traffic
   minimum_tls_version = "TLS1_2" # Enforces min TLS version
+
+  # added this to allow bucket url to be authenticated before access  
+  public_network_access_enabled = true
+
+  network_rules {
+    default_action = "Deny"
+
+    virtual_network_subnet_ids = [
+      azurerm_subnet.public.id
+    ]
+
+    bypass = ["AzureServices"]
+  }
 }
 
 resource "azurerm_storage_container" "public-storage-container" {
