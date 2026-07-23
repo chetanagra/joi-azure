@@ -16,3 +16,7 @@ terraform {
 provider "azurerm" {
   features {}
 }
+
+/*
+Improvements :- This file can be deleted not required as no resource is getting created 
+*/
