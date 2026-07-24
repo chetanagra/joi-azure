@@ -15,7 +15,7 @@ resource "azurerm_storage_account" "public-storage-account" {
     default_action = "Deny"
 
     virtual_network_subnet_ids = [
-      azurerm_subnet.public.id
+      azurerm_subnet.private_subnet.id
     ]
 
     bypass = ["AzureServices"]
