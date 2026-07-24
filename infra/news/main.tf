@@ -21,6 +21,44 @@ data "azurerm_storage_container" "public-storage-container" {
   storage_account_name = data.azurerm_storage_account.public-storage-account.name
 }
 
+# upload docker.sh file to blob 
+resource "azurerm_storage_blob" "provision_docker" {
+  name                   = "provision-docker"
+  storage_account_name   = azurerm_storage_account.public-storage-account.name
+  storage_container_name = azurerm_storage_container.public-storage-container.name
+  type                   = "Block"
+
+  source = "${path.module}/provision-docker.sh"
+}
+
+# upload quotes.sh file to blob
+resource "azurerm_storage_blob" "provision_quotes" {
+  name                   = "provision-quotes"
+  storage_account_name   = azurerm_storage_account.public-storage-account.name
+  storage_container_name = azurerm_storage_container.public-storage-container.name
+  type                   = "Block"
+
+  source = "${path.module}/provision-quotes.sh"
+}
+
+resource "azurerm_storage_blob" "provision_newsfeed" {
+  name                   = "provision-newsfeed"
+  storage_account_name   = azurerm_storage_account.public-storage-account.name
+  storage_container_name = azurerm_storage_container.public-storage-container.name
+  type                   = "Block"
+
+  source = "${path.module}/provision-newsfeed.sh"
+}
+
+resource "azurerm_storage_blob" "provision_frontend" {
+  name                   = "provision-frontend"
+  storage_account_name   = azurerm_storage_account.public-storage-account.name
+  storage_container_name = azurerm_storage_container.public-storage-container.name
+  type                   = "Block"
+
+  source = "${path.module}/provision-frontend.sh"
+}
+
 data "azurerm_network_interface" "network-interface-quotes" {
   name                = "network-interface-quotes"
   resource_group_name = data.azurerm_resource_group.azure-resource.name
