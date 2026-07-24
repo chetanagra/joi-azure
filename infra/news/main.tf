@@ -119,7 +119,7 @@ resource "azurerm_linux_virtual_machine" "virtual-machine-quotes" {
 
 }
 
-# Use VM extensions to run bash scripts
+# Use VM extensions to run bash scripts quotes
 resource "azurerm_virtual_machine_extension" "quotes" {
   name                 = "quotes-provisioning"
   virtual_machine_id   = azurerm_linux_virtual_machine.virtual-machine-quotes.id
@@ -186,7 +186,7 @@ resource "azurerm_linux_virtual_machine" "virtual-machine-newsfeed" {
 
 }
 
-# Use VM extensions to run bash scripts
+# Use VM extensions to run bash scripts newsfeed
 resource "azurerm_virtual_machine_extension" "newsfeed" {
   name                 = "newsfeed-provisioning"
   virtual_machine_id   = azurerm_linux_virtual_machine.virtual-machine-newsfeed.id
@@ -219,6 +219,7 @@ resource "azurerm_virtual_machine_extension" "newsfeed" {
   ]
 }
 
+# Use VM extensions to run bash scripts quotes
 resource "azurerm_linux_virtual_machine" "virtual-machine-frontend" {
   name                = "frontend"
   resource_group_name = data.azurerm_resource_group.azure-resource.name
