@@ -84,6 +84,20 @@ locals {
   url_static_blob = "https://${data.azurerm_storage_account.public-storage-account.name}.blob.core.windows.net/${data.azurerm_storage_container.public-storage-container.name}"
 }
 
+# key vault setup 
+resource "azurerm_key_vault" "app" {
+  name                = "${var.prefix}-app-kv"
+  location            = var.location
+  resource_group_name = data.azurerm_resource_group.azure-resource.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+
+  sku_name = "standard"
+
+  enable_rbac_authorization = true
+
+  soft_delete_retention_days = 7
+  purge_protection_enabled   = true
+}
 
 resource "azurerm_linux_virtual_machine" "virtual-machine-quotes" {
   name                = "quotes"
@@ -169,7 +183,7 @@ resource "azurerm_linux_virtual_machine" "virtual-machine-newsfeed" {
 
   admin_ssh_key {
     username   = "adminuser"
-    public_key = azurerm_key_vault_secret.ssh_public_key.value # public key will be passed from vault
+    public_key = file("${path.module}/../id_rsa.pub")
   }
 
   os_disk {
@@ -219,6 +233,7 @@ resource "azurerm_virtual_machine_extension" "newsfeed" {
   ]
 }
 
+
 # Use VM extensions to run bash scripts quotes
 resource "azurerm_linux_virtual_machine" "virtual-machine-frontend" {
   name                = "frontend"
@@ -237,7 +252,7 @@ resource "azurerm_linux_virtual_machine" "virtual-machine-frontend" {
 
   admin_ssh_key {
     username   = "adminuser"
-    public_key = azurerm_key_vault_secret.ssh_public_key.value # public key will be passed from vault
+    public_key = file("${path.module}/../id_rsa.pub")
   }
 
   os_disk {
@@ -252,6 +267,14 @@ resource "azurerm_linux_virtual_machine" "virtual-machine-frontend" {
     version   = "latest"
   }
 
+}
+
+#Give VM identity read permissions to key vaulr secret
+resource "azurerm_role_assignment" "kv_secrets_user" {
+  scope                = azurerm_key_vault.app.id
+  role_definition_name = "Key Vault Secrets User"
+
+  principal_id = data.azurerm_user_assigned_identity.identity-acr.principal_id
 }
 
 resource "azurerm_virtual_machine_extension" "frontend" {
@@ -276,7 +299,8 @@ resource "azurerm_virtual_machine_extension" "frontend" {
       "'${var.prefix}frontend'",
       "'http://${azurerm_linux_virtual_machine.virtual-machine-quotes.private_ip_address}:8082'",
       "'http://${azurerm_linux_virtual_machine.virtual-machine-newsfeed.private_ip_address}:8081'",
-      "'${local.url_static_blob}'"
+      "'${local.url_static_blob}'",
+      "'${azurerm_key_vault.app.name}'"
     ])
 
     managedIdentity = {
