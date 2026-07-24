@@ -79,42 +79,6 @@ locals {
 }
 
 
-# ── Key Vault to store SSH keys ─────────────────────────────────────
-resource "azurerm_key_vault" "ssh_kv" {
-  name                       = "${var.prefix}sshkv"
-  location                   = var.location
-  resource_group_name        = data.azurerm_resource_group.azure-resource.name
-  tenant_id                  = data.azurerm_client_config.current.tenant_id
-  sku_name                   = "standard"
-  purge_protection_enabled   = true
-  soft_delete_retention_days = 7
-  enable_rbac_authorization  = false
-}
-
-# ── Store the PUBLIC key as a secret ───────────────────────────────
-resource "azurerm_key_vault_secret" "ssh_public_key" {
-  name         = "ssh-public-key"
-  value        = file("${path.module}/../id_rsa.pub")
-  key_vault_id = azurerm_key_vault.ssh_kv.id
-}
-
-# ── Store the PRIVATE key as a secret ──────────────────────────────
-resource "azurerm_key_vault_secret" "ssh_private_key" {
-  name         = "ssh-private-key"
-  value        = file("${path.module}/../id_rsa")
-  key_vault_id = azurerm_key_vault.ssh_kv.id
-}
-
-# ── Access policy so Terraform can read secrets ────────────────────
-resource "azurerm_key_vault_access_policy" "terraform_access" {
-  key_vault_id = azurerm_key_vault.ssh_kv.id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = data.azurerm_client_config.current.object_id
-
-  secret_permissions = ["Get", "List"]
-}
-
-
 resource "azurerm_linux_virtual_machine" "virtual-machine-quotes" {
   name                = "quotes"
   resource_group_name = data.azurerm_resource_group.azure-resource.name
@@ -132,7 +96,7 @@ resource "azurerm_linux_virtual_machine" "virtual-machine-quotes" {
 
   admin_ssh_key {
     username   = "adminuser"
-    public_key = azurerm_key_vault_secret.ssh_public_key.value # public key will be passed from vault
+    public_key = file("${path.module}/../id_rsa.pub")
   }
 
   os_disk {
@@ -147,41 +111,39 @@ resource "azurerm_linux_virtual_machine" "virtual-machine-quotes" {
     version   = "latest"
   }
 
-  connection {
-    host        = self.public_ip_address
-    user        = "adminuser"
-    type        = "ssh"
-    private_key = azurerm_key_vault_secret.ssh_private_key.value
-    timeout     = "1m"
-    agent       = true
-  }
+}
 
-  provisioner "file" {
-    source      = "${path.module}/provision-docker.sh"
-    destination = "/home/adminuser/provision-docker.sh"
-  }
+# Use VM extensions to run bash scripts
+resource "azurerm_virtual_machine_extension" "quotes" {
+  name                 = "quotes-provisioning"
+  virtual_machine_id   = azurerm_linux_virtual_machine.virtual-machine-quotes.id
+  publisher            = "Microsoft.Azure.Extensions"
+  type                 = "CustomScript"
+  type_handler_version = "2.1"
 
-  provisioner "file" {
-    source      = "${path.module}/provision-quotes.sh"
-    destination = "/home/adminuser/provision-quotes.sh"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /home/adminuser/provision-docker.sh",
-      "/home/adminuser/provision-docker.sh"
+  protected_settings = jsonencode({
+    fileUris = [
+      azurerm_storage_blob.provision_docker.url,
+      azurerm_storage_blob.provision_quotes.url
     ]
-  }
 
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /home/adminuser/provision-quotes.sh",
-      <<EOF
-      /home/adminuser/provision-quotes.sh ${var.prefix}quotes${var.acr_url_default}/${var.prefix}quotes:latest ${data.azurerm_user_assigned_identity.identity-acr.id} ${var.prefix}quotes   
-      EOF
-    ]
-  }
+    commandToExecute = join(" ", [
+      "chmod +x provision-docker.sh provision-quotes.sh &&",
+      "./provision-docker.sh &&",
+      "./provision-quotes.sh",
+      "'${var.prefix}quotes${var.acr_url_default}/${var.prefix}quotes:latest'",
+      "'${data.azurerm_user_assigned_identity.identity-acr.id}'",
+      "'${var.prefix}quotes'"
+    ])
 
+    managedIdentity = {
+      clientId = data.azurerm_user_assigned_identity.identity-acr.client_id
+    }
+  })
+
+  depends_on = [
+    azurerm_role_assignment.storage
+  ]
 }
 
 resource "azurerm_linux_virtual_machine" "virtual-machine-newsfeed" {
@@ -216,41 +178,39 @@ resource "azurerm_linux_virtual_machine" "virtual-machine-newsfeed" {
     version   = "latest"
   }
 
-  connection {
-    host        = self.public_ip_address
-    user        = "adminuser"
-    type        = "ssh"
-    private_key = azurerm_key_vault_secret.ssh_private_key.value
-    timeout     = "1m"
-    agent       = true
-  }
+}
 
-  provisioner "file" {
-    source      = "${path.module}/provision-docker.sh"
-    destination = "/home/adminuser/provision-docker.sh"
-  }
+# Use VM extensions to run bash scripts
+resource "azurerm_virtual_machine_extension" "newsfeed" {
+  name                 = "newsfeed-provisioning"
+  virtual_machine_id   = azurerm_linux_virtual_machine.virtual-machine-newsfeed.id
+  publisher            = "Microsoft.Azure.Extensions"
+  type                 = "CustomScript"
+  type_handler_version = "2.1"
 
-  provisioner "file" {
-    source      = "${path.module}/provision-newsfeed.sh"
-    destination = "/home/adminuser/provision-newsfeed.sh"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /home/adminuser/provision-docker.sh",
-      "/home/adminuser/provision-docker.sh"
+  protected_settings = jsonencode({
+    fileUris = [
+      azurerm_storage_blob.provision_docker.url,
+      azurerm_storage_blob.provision_newsfeed.url
     ]
-  }
 
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /home/adminuser/provision-newsfeed.sh",
-      <<EOF
-      /home/adminuser/provision-newsfeed.sh ${var.prefix}newsfeed${var.acr_url_default}/${var.prefix}newsfeed:latest ${data.azurerm_user_assigned_identity.identity-acr.id} ${var.prefix}newsfeed    
-      EOF
-    ]
-  }
+    commandToExecute = join(" ", [
+      "chmod +x provision-docker.sh provision-newsfeed.sh &&",
+      "./provision-docker.sh &&",
+      "./provision-newsfeed.sh",
+      "'${var.prefix}newsfeed${var.acr_url_default}/${var.prefix}newsfeed:latest'",
+      "'${data.azurerm_user_assigned_identity.identity-acr.id}'",
+      "'${var.prefix}newsfeed'"
+    ])
 
+    managedIdentity = {
+      clientId = data.azurerm_user_assigned_identity.identity-acr.client_id
+    }
+  })
+
+  depends_on = [
+    azurerm_role_assignment.storage
+  ]
 }
 
 resource "azurerm_linux_virtual_machine" "virtual-machine-frontend" {
@@ -285,41 +245,43 @@ resource "azurerm_linux_virtual_machine" "virtual-machine-frontend" {
     version   = "latest"
   }
 
-  connection {
-    host        = self.public_ip_address
-    user        = "adminuser"
-    type        = "ssh"
-    private_key = azurerm_key_vault_secret.ssh_private_key.value
-    timeout     = "1m"
-    agent       = true
-  }
+}
 
-  provisioner "file" {
-    source      = "${path.module}/provision-docker.sh"
-    destination = "/home/adminuser/provision-docker.sh"
-  }
+resource "azurerm_virtual_machine_extension" "frontend" {
+  name                 = "frontend-provisioning"
+  virtual_machine_id   = azurerm_linux_virtual_machine.virtual-machine-frontend.id
+  publisher            = "Microsoft.Azure.Extensions"
+  type                 = "CustomScript"
+  type_handler_version = "2.1"
 
-  provisioner "file" {
-    source      = "${path.module}/provision-frontend.sh"
-    destination = "/home/adminuser/provision-frontend.sh"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /home/adminuser/provision-docker.sh",
-      "/home/adminuser/provision-docker.sh"
+  protected_settings = jsonencode({
+    fileUris = [
+      azurerm_storage_blob.provision_docker.url,
+      azurerm_storage_blob.provision_frontend.url
     ]
-  }
 
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /home/adminuser/provision-frontend.sh",
-      <<EOF
-      /home/adminuser/provision-frontend.sh ${var.prefix}frontend${var.acr_url_default}/${var.prefix}frontend:latest ${data.azurerm_user_assigned_identity.identity-acr.id} ${var.prefix}frontend http://${azurerm_linux_virtual_machine.virtual-machine-quotes.private_ip_address}:8082 http://${azurerm_linux_virtual_machine.virtual-machine-newsfeed.private_ip_address}:8081 ${local.url_static_blob}
-      EOF
-    ]
-  }
+    commandToExecute = join(" ", [
+      "chmod +x provision-docker.sh provision-frontend.sh &&",
+      "./provision-docker.sh &&",
+      "./provision-frontend.sh",
+      "'${var.prefix}frontend${var.acr_url_default}/${var.prefix}frontend:latest'",
+      "'${data.azurerm_user_assigned_identity.identity-acr.id}'",
+      "'${var.prefix}frontend'",
+      "'http://${azurerm_linux_virtual_machine.virtual-machine-quotes.private_ip_address}:8082'",
+      "'http://${azurerm_linux_virtual_machine.virtual-machine-newsfeed.private_ip_address}:8081'",
+      "'${local.url_static_blob}'"
+    ])
 
+    managedIdentity = {
+      clientId = data.azurerm_user_assigned_identity.identity-acr.client_id
+    }
+  })
+
+  depends_on = [
+    azurerm_role_assignment.storage,
+    azurerm_virtual_machine_extension.quotes,
+    azurerm_virtual_machine_extension.newsfeed
+  ]
 }
 
 output "frontend_url" {
