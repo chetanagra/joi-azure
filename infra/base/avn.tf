@@ -285,6 +285,7 @@ resource "azurerm_subnet_network_security_group_association" "association-ni-sg-
 resource "azurerm_network_interface_security_group_association" "association-ni-sg-frontend" {
   network_interface_id      = azurerm_network_interface.network-interface-frontend.id
   network_security_group_id = azurerm_network_security_group.security-group-frontend.id
+  backend_address_pool_id = azurerm_lb_backend_address_pool.lb-backend-pool.id
 }
 
 output "frontend_url" {
