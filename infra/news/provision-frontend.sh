@@ -6,7 +6,7 @@ ACR_NAME=$3
 QUOTE_SERVICE_URL=$4
 NEWSFEED_SERVICE_URL=$5
 STATIC_URL=$6
-
+KEY_VAULT_NAME=$7
 
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
@@ -22,7 +22,13 @@ sudo az acr login --name $ACR_NAME
 
 sudo docker pull $DOCKER_IMAGE
 
-NEWSFEED_SECRET_TOKEN="T1&eWbYXNWG1w1^YGKDPxAWJ@^et^&kX"
+NEWSFEED_SECRET_TOKEN=$(
+  az keyvault secret show \
+    --vault-name "$KEY_VAULT_NAME" \
+    --name "newsfeed-service-token" \
+    --query value \
+    --output tsv
+)
 
 sudo docker run -d \
   --restart always \
