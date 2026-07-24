@@ -292,7 +292,3 @@ resource "azurerm_network_interface_security_group_association" "association-ni-
   network_security_group_id = azurerm_network_security_group.security-group-frontend.id
   backend_address_pool_id = azurerm_lb_backend_address_pool.lb-backend-pool.id
 }
-
-output "frontend_url" {
-  value = "http://${azurerm_public_ip.public-ip-frontend.ip_address}:8080"
-}
