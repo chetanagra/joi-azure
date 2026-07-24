@@ -1,3 +1,9 @@
+#refernce public ip for lb
+data "azurerm_public_ip" "public-ip-lb" {
+  name                = "public-ip-lb"
+  resource_group_name = data.azurerm_resource_group.azure-resource.name
+}
+
 data "azurerm_user_assigned_identity" "identity-acr" {
   resource_group_name = data.azurerm_resource_group.azure-resource.name
   name                = "identity-acr"
