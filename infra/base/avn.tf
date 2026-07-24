@@ -20,6 +20,11 @@ resource "azurerm_subnet" "private_subnet" {
   resource_group_name  = data.azurerm_resource_group.azure-resource.name
   virtual_network_name = azurerm_virtual_network.virtual-network.name
   address_prefixes     = ["10.5.1.0/24"]
+
+  # Storage firewall can recognize/allow traffic from this subnet
+  service_endpoints = [
+    "Microsoft.Storage"
+  ]
 }
 
 # Routing table for public subnet
